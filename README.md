@@ -8,6 +8,7 @@
 
 - **[トガメ](https://github.com/ayarion/togame)** — SNSを開いた瞬間に「なんで開いたの？」と問い返すアプリ（[公開ページ](https://tsukuriba.org/togame/)）
 - **[Kinto-Log](https://github.com/ayarion/kinto-log)** — かわいく続ける、筋トレ記録アプリ（[公開ページ](https://tsukuriba.org/kinto-log/)）
+- **[OjiMate](https://github.com/ayarion/OjiMate)** — 集中すれば働き、サボれば一緒にサボる、表裏一体のおじさんと暮らす集中アプリ（[公開ページ](https://tsukuriba.org/OjiMate/)）
 
 ## 技術
 
