@@ -12,5 +12,8 @@
 
 ## 技術
 
-- HTML / CSS / JavaScript（このトップページは依存なしの単一ファイル）
+- HTML / CSS / JavaScript（このトップページはビルド不要の単一ファイル）
+- ガラス質のUIと、スクリーンショットが流れ続けるショーケース（CSSアニメーションのみ）
+- フォントは Google Fonts（Instrument Serif / Zen Kaku Gothic New）
+- ショーケース用の画像は `assets/stream`、カードのサムネは `assets/thumbs` に webp で配置
 - GitHub Pages + カスタムドメイン
