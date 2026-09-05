@@ -547,30 +547,33 @@
     }
   }
 
-  /* big links: the nearest one is meant to leave the frame */
-  var L = 2.2, R = 1.55, r = 0.56, PITCH = 4.05, TWIST = 0.14;
+  /* big links, stretched into long ovals rather than stubby rounded rectangles */
+  var L = 3.1, R = 1.35, r = 0.56, PITCH = 5.7, TWIST = 0.14;
   var linkGeo = new THREE.TubeGeometry(new Stadium(L, R), narrow ? 140 : 220, r, narrow ? 22 : 34, true);
-  /* thick smoked glass: a cool tint, dark inside, hard white rims */
+  /* clear glass: nearly full transmission, a thin wall so it stays see-through
+     rather than absorbing into a flat tinted color; the cool tint only shows
+     up where the glass is thickest (the loop's rim), not through its body */
   function glassFor(depth) {
     return new THREE.MeshPhysicalMaterial({
-      color: 0xf3f6fa, metalness: 0, roughness: 0.02,
-      transmission: 0.94, thickness: 3.2, ior: 1.5,
+      color: 0xffffff, metalness: 0, roughness: 0.02,
+      transmission: 1, thickness: 0.55, ior: 1.5,
       clearcoat: 1, clearcoatRoughness: 0.02,
-      envMapIntensity: 2.1 - depth * 0.55, specularIntensity: 1,
-      attenuationColor: new THREE.Color(0x8fa3c8), attenuationDistance: 3.4
+      envMapIntensity: 1.9 - depth * 0.5, specularIntensity: 1,
+      attenuationColor: new THREE.Color(0xcfe0f7), attenuationDistance: 5.5
     });
   }
 
-  /* the path: from very near the lens at bottom-left, bowing out, off the top-right */
+  /* the path: from very near the lens at bottom-left, one long graceful bend
+     -- not a zigzag -- sweeping through the middle and out the top-right */
   var path = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-14.0, -11.5,  6.0),
-    new THREE.Vector3( -7.6,  -6.4,  4.6),
-    new THREE.Vector3( -2.6,  -2.4,  1.6),
-    new THREE.Vector3(  1.6,   0.6, -1.8),
-    new THREE.Vector3(  5.6,   3.0, -5.4),
-    new THREE.Vector3( 10.2,   5.0, -9.8),
-    new THREE.Vector3( 16.0,   6.4, -15.0)
-  ], false, 'centripetal', 0.5);
+    new THREE.Vector3(-15.5, -15.4,  7.5),
+    new THREE.Vector3( -9.5,  -11.6,  5.8),
+    new THREE.Vector3( -4.2,  -5.6,  2.2),
+    new THREE.Vector3(  0.6,   0.2, -2.6),
+    new THREE.Vector3(  5.6,   1.6, -7.6),
+    new THREE.Vector3( 11.0,   2.6, -12.6),
+    new THREE.Vector3( 17.0,   4.8, -17.6)
+  ], false, 'centripetal', 0.55);
   var pathLen = path.getLength();
   var N = Math.floor(pathLen / PITCH) + 1;
 
