@@ -411,7 +411,7 @@
   var narrow = window.innerWidth < 700;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, narrow ? 1.25 : 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.9;
+  renderer.toneMappingExposure = 0.8;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -425,9 +425,12 @@
   camera.lookAt(LOOK);
 
   /* the environment feeds only the glass's reflections, never what the camera sees directly
-     (the visible backdrop below is its own soft dusk gradient) -- so it is free to be a real
-     studio rig: bright cream key, a near-black floor for the dark contrast glass needs to read
-     as glass rather than white plastic, punchy blue and pink accents picked up at the edges */
+     (the visible backdrop below is its own soft dusk gradient). Most of a glass tube's surface
+     faces the camera near head-on, where transmission dominates over reflection -- so almost all
+     of the environment sphere is deliberately near-black: that is what turns into the dark
+     interior bands a real chain photograph shows. Reflectance only spikes at grazing angles,
+     right at the tube's silhouette, so a handful of small, very bright, tightly-sized "hotspots"
+     placed there are what draw the sharp white pinprick highlights over that dark ground. */
   var pmrem = new THREE.PMREMGenerator(renderer);
   var envScene = new THREE.Scene();
   var dome = new THREE.Mesh(
@@ -435,36 +438,35 @@
     new THREE.ShaderMaterial({
       side: THREE.BackSide,
       uniforms: {
-        top: { value: new THREE.Color(0xfffaf2) },
-        mid: { value: new THREE.Color(0x6a6488) },
-        bottom: { value: new THREE.Color(0x0a0714) },
-        east: { value: new THREE.Color(0x1c2c52) }
+        top: { value: new THREE.Color(0x151020) },
+        bottom: { value: new THREE.Color(0x000000) },
+        east: { value: new THREE.Color(0x081428) }
       },
       vertexShader: 'varying vec3 p; void main(){ p = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
       fragmentShader: [
-        'uniform vec3 top; uniform vec3 mid; uniform vec3 bottom; uniform vec3 east; varying vec3 p;',
+        'uniform vec3 top; uniform vec3 bottom; uniform vec3 east; varying vec3 p;',
         'void main(){',
         '  float h = clamp(p.y/60.0*0.5+0.5, 0.0, 1.0);',
-        '  vec3 c = h > 0.5 ? mix(mid, top, pow((h-0.5)*2.0, 1.5)) : mix(bottom, mid, pow(h*2.0, 0.6));',
+        '  vec3 c = mix(bottom, top, pow(h, 1.6));',
         '  float e = clamp(p.x/60.0*0.5+0.5, 0.0, 1.0);',
-        '  c = mix(c, east, smoothstep(0.5, 1.0, e) * 0.85);',
+        '  c = mix(c, east, smoothstep(0.35, 1.0, e) * 0.6);',
         '  gl_FragColor = vec4(c, 1.0);',
         '}'
       ].join('\n')
     })
   );
   envScene.add(dome);
-  function softbox(w, h, x, y, z, ry, col, k) {
+  function hotspot(size, x, y, z, col, k) {
     var c = new THREE.Color(col).multiplyScalar(k);
-    var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
-    m.position.set(x, y, z); m.lookAt(0, 0, 0); m.rotation.y += ry || 0; envScene.add(m);
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
+    m.position.set(x, y, z); m.lookAt(0, 0, 0); envScene.add(m);
   }
-  softbox(26, 10, -20, 26, 12, 0, 0xffffff, 9.0);    /* a hard, bright key -- this is what draws the white edge highlights */
-  softbox(14, 26, 32, 6, -4, 0, 0xa9c4ee, 4.2);      /* cool blue fill from the right */
-  softbox(36, 5, 0, -26, 16, 0, 0xf7b6d8, 2.0);      /* a thin pink accent low and far */
-  softbox(9, 9, 9, 22, 28, 0, 0xffffff, 7.5);        /* a second hard rim, opposite the key */
-  softbox(50, 24, -6, -10, -30, 0, 0x05030a, 1.0);   /* a dark flag behind, for contrast bands */
-  scene.environment = pmrem.fromScene(envScene, 0.035).texture;
+  hotspot(4.5, -18, 24, 10,  0xffffff, 55);  /* the main key glint, upper-left */
+  hotspot(2.6, 26, 14, -8,  0xffffff, 44);   /* a second, smaller glint to the right */
+  hotspot(2,   10, 26, 18,  0xdce8ff, 36);   /* a cool pinprick, top */
+  hotspot(3.4, -6,  -22, -14, 0xf3c9df, 18); /* a soft pink glint from below, matching the sky's pink */
+  hotspot(1.6, 30, -6, 20,  0xffffff, 30);   /* a rim glint on the far side */
+  scene.environment = pmrem.fromScene(envScene, 0.018).texture;
   pmrem.dispose();
 
   /* backdrop: same sky as the page, so the hero sits flush in it */
@@ -549,31 +551,35 @@
 
   /* big links, stretched into long ovals rather than stubby rounded rectangles */
   var L = 3.1, R = 1.35, r = 0.56, PITCH = 5.7, TWIST = 0.14;
-  var linkGeo = new THREE.TubeGeometry(new Stadium(L, R), narrow ? 140 : 220, r, narrow ? 22 : 34, true);
+  var linkGeo = new THREE.TubeGeometry(new Stadium(L, R), narrow ? 160 : 260, r, narrow ? 30 : 52, true);
   /* clear glass: nearly full transmission, a thin wall so it stays see-through
      rather than absorbing into a flat tinted color; the cool tint only shows
      up where the glass is thickest (the loop's rim), not through its body */
   function glassFor(depth) {
     return new THREE.MeshPhysicalMaterial({
-      color: 0xffffff, metalness: 0, roughness: 0.02,
+      color: 0xffffff, metalness: 0, roughness: 0.012,
       transmission: 1, thickness: 0.55, ior: 1.5,
-      clearcoat: 1, clearcoatRoughness: 0.02,
-      envMapIntensity: 1.9 - depth * 0.5, specularIntensity: 1,
+      clearcoat: 1, clearcoatRoughness: 0.012,
+      envMapIntensity: 2.3 - depth * 0.55, specularIntensity: 1,
       attenuationColor: new THREE.Color(0xcfe0f7), attenuationDistance: 5.5
     });
   }
 
-  /* the path: from very near the lens at bottom-left, one long graceful bend
-     -- not a zigzag -- sweeping through the middle and out the top-right */
-  var path = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-15.5, -15.4,  7.5),
-    new THREE.Vector3( -9.5,  -11.6,  5.8),
-    new THREE.Vector3( -4.2,  -5.6,  2.2),
-    new THREE.Vector3(  0.6,   0.2, -2.6),
-    new THREE.Vector3(  5.6,   1.6, -7.6),
-    new THREE.Vector3( 11.0,   2.6, -12.6),
-    new THREE.Vector3( 17.0,   4.8, -17.6)
-  ], false, 'centripetal', 0.55);
+  /* the path: a single analytic bow (a sine hump added to a straight diagonal),
+     not hand-placed points -- hand-placed control points kept producing local
+     slope reversals that read as a kink no matter how they were nudged. A sine
+     is smooth by construction, so the bend has no elbow anywhere along it. */
+  var pathPts = [];
+  var PN = 11;
+  for (var pi = 0; pi < PN; pi++) {
+    var t = pi / (PN - 1);
+    var x = THREE.MathUtils.lerp(-16.5, 18.0, t);
+    var yStraight = THREE.MathUtils.lerp(-15.0, 5.5, t);
+    var bow = Math.sin(t * Math.PI) * 3.4;
+    var z = THREE.MathUtils.lerp(8.5, -19.0, t);
+    pathPts.push(new THREE.Vector3(x, yStraight + bow, z));
+  }
+  var path = new THREE.CatmullRomCurve3(pathPts, false, 'centripetal', 0.5);
   var pathLen = path.getLength();
   var N = Math.floor(pathLen / PITCH) + 1;
 
@@ -604,7 +610,7 @@
   if (narrow) { rig.scale.setScalar(0.72); rig.position.set(1.4, -0.6, 0); rig.rotation.z = 0.28; }
   scene.add(rig);
 
-  var key = new THREE.DirectionalLight(0xfff7ee, 1.05);
+  var key = new THREE.DirectionalLight(0xfff7ee, 0.6);
   key.position.set(-9, 12, 9);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -614,10 +620,10 @@
   key.shadow.camera.left = -22; key.shadow.camera.right = 22;
   key.shadow.camera.top = 22; key.shadow.camera.bottom = -22;
   scene.add(key);
-  var rim = new THREE.DirectionalLight(0xbcd0f2, 0.6);
+  var rim = new THREE.DirectionalLight(0xbcd0f2, 0.4);
   rim.position.set(8, -4, -6);
   scene.add(rim);
-  scene.add(new THREE.HemisphereLight(0xfbf6ef, 0x8b78b4, 0.28));
+  scene.add(new THREE.HemisphereLight(0xfbf6ef, 0x8b78b4, 0.1));
 
   /* sizing */
   function fit() {
