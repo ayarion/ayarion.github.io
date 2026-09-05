@@ -13,7 +13,9 @@
 ## 技術
 
 - HTML / CSS / JavaScript（このトップページはビルド不要の単一ファイル）
-- ガラス質のUIと、スクリーンショットが流れ続けるショーケース（CSSアニメーションのみ）
-- フォントは Google Fonts（Instrument Serif / Zen Kaku Gothic New）
-- ショーケース用の画像は `assets/stream`、カードのサムネは `assets/thumbs` に webp で配置
+- ヒーローはガラスのチェーンを WebGL で生成して軸回転させている（three.js r152 を `assets/vendor` に同梱、CDN 非依存）
+- チェーンの奥に置いた PORTFOLIO の文字をガラスが屈折させる
+- スクロールするとアプリのスクリーンショットが 3 列で流れ続けるショーケースが立ち上がる（CSS アニメーション）
+- フォントは Google Fonts（Inter Tight）
+- ショーケース用の画像は `assets/stream` に webp で配置
 - GitHub Pages + カスタムドメイン
